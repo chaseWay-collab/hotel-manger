@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.HotelFloorMapper">
+    <resultMap id="BaseResultMap" type="com.example.entity.hotel.HotelFloor">
+        <id column="f_id" jdbcType="VARCHAR" property="fId" />
+        <result column="ho_id" jdbcType="VARCHAR" property="hoId" />
+        <result column="f_msg" jdbcType="VARCHAR" property="fMsg" />
+        <result column="f_no" jdbcType="INTEGER" property="fNo" />
+        <result column="f_name" jdbcType="VARCHAR" property="fName" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+        <result column="deleted" jdbcType="TINYINT" property="deleted" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        `f_id`, ho_id, f_msg, f_no, f_name, create_time, update_time, deleted
+    </sql>
+
+</mapper>

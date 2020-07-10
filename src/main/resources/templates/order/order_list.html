@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+<div class="panel panel-default operation_order" hidden>
+    <div class="panel-heading title"></div>
+    <div class="layui-card-body">
+        <form class="layui-form " action="" lay-filter="deptInfo" style="width: 700px;margin-top: 10px">
+            <input name="oid" hidden/>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">姓名</label>
+                <div class="layui-input-block">
+                    <input type="name" name="name" placeholder="请输入姓名" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">邮箱</div>
+                <div class="layui-input-block">
+                    <input type="email" name="email" placeholder="请输入邮箱" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">房间类型</div>
+                <div class="layui-input-block">
+                    <input type="rtName" name="rtName" placeholder="请选择房间类型" autocomplete="off" class="layui-input"
+                           readonly="readonly" style="background:#eeeeee!important">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">房间数量</div>
+                <div class="layui-input-block">
+                    <input type="ornum" name="ornum" placeholder="请输入要预订的房间数量" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-form-label ">入住状态</div>
+                <div class="layui-input-block">
+                    <select id="usersta" name="userSta">
+                        <option value="" selected>请选择入住状态</option>
+                        <option value="0">未入住</option>
+                        <option value="1">已安排入住</option>
+                        <option value="-1">已退房</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="submit" class="layui-btn" lay-submit="" lay-filter="submit">保存</button>
+                    <button class="layui-btn layui-btn-primary" id="btn_cancel">返回</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="order_table_div">
+    <div id="searchParam" shiro:hasPermission="hotel:order:list">
+        <div class="layui-form-item">
+            <div class="layui-input-inline">
+                <input type="text" id="ono" class="layui-input" autocomplete="off" placeholder="请输入订单号">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" id="name" class="layui-input" autocomplete="off" placeholder="请输入订单用户名字">
+            </div>
+
+            <div class="layui-input-inline layui-form">
+                <select id="userstatus" name="userSta">
+                    <option value="">请选择入住状态</option>
+                    <option value="0">未入住</option>
+                    <option value="-1">已退房</option>
+                    <option value="1">已入住</option>
+                </select>
+            </div>
+            <div class="layui-input-inline ">
+                <button class="layui-btn" id="search">查询</button>
+            </div>
+        </div>
+
+    </div>
+    <table class="layui-hide" id="order_table" lay-filter="order_table"></table>
+    <div id="laypage"></div>
+</div>
+
+</body>
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addNewOrder" shiro:hasPermission="hotel:order:add">添加</button>
+        <button class="layui-btn layui-btn-sm" lay-event="batchDeleted" shiro:hasPermission="hotel:order:deleted">删除</button>
+    </div>
+</script>
+<!--<a class="layui-btn  layui-btn-xs" lay-event="operationOrder" shiro:hasPermission="sys:order:detail">查看详情</a>-->
+<script type="text/html" id="tool">
+    <a class="layui-btn layui-btn-xs" lay-event="edit" shiro:hasPermission="hotel:order:update">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" shiro:hasPermission="hotel:order:deleted">删除</a>
+</script>
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script>
+    var table = layui.table;
+    var laypage = layui.laypage;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = jQuery = layui.jquery;
+    var laydate = layui.laydate;
+    var tree = layui.tree;
+    var transfer = layui.transfer;
+
+    layui.use(['table', 'laypage', 'layer', 'laydate', 'tree', 'transfer'], function () {
+        var searchParam = {
+            ono: null,
+            name: null,
+            userSta: null,
+            startTime: null,
+            endTime: null,
+            page: 1,
+            limit: 10
+        };
+
+        //初始化 获取数据
+        loadData();
+
+        function loadData(page) {
+            console.log(page);
+            searchParam.page = CoreUtil.isEmpty(page) ? searchParam.page : page;
+            CoreUtil.sendAjax("/hotel/orders", JSON.stringify(searchParam), function (res) {
+                console.log(res);
+                //初始化渲染数据
+                if (res.data.records != null) {
+                    console.log(res.data.records);
+                    loadTable(res.data.records);
+                }
+                laypageTable(res.data.total);
+            }, "POST", false, function (res) {
+                layer.msg("抱歉！您暂无获取列表的权限");
+                var noAuthorityData = [];
+                loadTable(noAuthorityData);
+            });
+        }
+
+        var laypageTable = function (total) {
+            // console.log(total);  // 2
+            laypage.render({
+                elem: 'laypage'
+                , count: total
+                , limit: searchParam.limit
+                , layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+                , curr: searchParam.page
+                , jump: function (obj, first) {
+                    if (!first) {
+                        searchParam.page = obj.curr;
+                        searchParam.limit = obj.limit;
+                        loadData()
+                    }
+                }
+            });
+        };
+
+        //渲染table
+        var loadTable = function (data) {
+            table.render({
+                elem: '#order_table'
+                , cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'},
+                        {field: 'ono', title: '订单编号', width: 130},
+                        {field: 'name', title: '订单用户姓名', width: 130},
+                        {field: 'ornum', title: '房间数量', width: 120},
+                        {field: 'rtName', title: '房间类型', width: 120},
+                        {
+                            field: 'status', title: '订单状态', width: 100, templet: function (item) {
+                                if (item.status === 0) {
+                                    return "支付中";
+                                }
+                                if (item.status === 1) {
+                                    return "已支付";
+                                }
+                                if (item.status === -1) {
+                                    return "未支付";
+                                }
+                            }
+                        },
+                        {
+                            field: 'userSta', title: '入住状态', width: 100, templet: function (item) {
+                                if (item.userSta === 0) {
+                                    return "未入住";
+                                }
+                                if (item.userSta === 1) {
+                                    return "入住中";
+                                }
+                                if (item.userSta === -1) {
+                                    return "已退房";
+                                }
+                            }
+                        },
+                        {field: 'createTime', title: '创建时间', minWidth: 120},
+                        {field: 'updateTime', title: '更新时间', minWidth: 120},
+                        {width: 300, toolbar: "#tool", title: '操作'}
+                    ]
+                ]
+                , data: data
+                , even: true
+                , limit: data.length
+                , limits: [10, 20, 30, 40, 50]
+                , toolbar: '#toolbar'
+
+            });
+        };
+        laydate.render({
+            elem: '#createTime'
+            , type: 'datetime'
+            , range: '~'
+            , done: function (value, date, endDate) {
+                if (value != null && value !== "") {
+                    searchParam.startTime = value.split("~")[0];
+                    searchParam.endTime = value.split("~")[1];
+                } else {
+                    searchParam.startTime = null;
+                    searchParam.endTime = null;
+                }
+
+            }
+        });
+        $("#search").click(function () {
+            searchParam.userSta = $("#userstatus").val();
+            searchParam.ono = $("#ono").val();
+            searchParam.name = $("#name").val();
+            loadData(1)
+        });
+
+        table.on('toolbar(order_table)', function (obj) {
+
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'batchDeleted':
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        layer.msg("请选择要批量删除的订单");
+                    } else {
+                        var orderIds = [];
+                        $(data).each(function (index, item) {
+                            orderIds.push(item.id);
+                        });
+                        tipDialog(orderIds, "选中的");
+                    }
+                    break;
+                case 'addNewOrder':
+                    $(".title").html("新增订单");
+                    $(".order_table_div").hide();
+                    $(".operation_order").show();
+                    $(".operation_order input[name=name]").val("");
+                    $(".operation_order input[name=email]").val("");
+                    $(".operation_order input[name=ornum]").val("");
+                    $(".operation_order select[name=status]").val("");  // select
+                    form.render(); //更新全部
+                    break;
+            }
+        });
+
+        table.on('tool(order_table)', function (obj) {
+            var data = obj.data;
+            console.log(286);
+            console.log(data);
+            switch (obj.event) {
+                case 'del':
+                    tipDialog(data.oid);
+                    break;
+                case 'edit':
+                    $(".order_table_div").hide();
+                    $(".operation_order").show();
+                    $(".title").html("编辑订单");
+                    $(".operation_order input[name=name]").val(data.name);
+                    $(".operation_order input[name=email]").val(data.email);
+                    $(".operation_order input[name=rtName]").val(data.rtName);
+                    $(".operation_order input[name=ornum]").val(data.ornum);
+                    $(".operation_order select[name=userSta]").val(data.userSta);
+                    form.render(); //更新全部
+                    break;
+            }
+        });
+
+        $("#btn_cancel").click(function () {
+            $(".order_table_div").show();
+            $(".operation_order").hide();
+            return false;
+        });
+        var tipDialog = function ( id ) {
+            layer.open({
+                content: '确定要删除么',
+                yes: function (index, layero) {
+                    layer.close(index); //如果设定了yes回调，需进行手工关闭
+                    CoreUtil.sendAjax("/hotel/order/" + id, null, function (res) {
+                        layer.msg(res.msg);
+                        loadData(1);
+                    }, "DELETE", false);
+                }
+            });
+        };
+
+        form.on('switch(switch)', function () {
+            $(".operation_order select[name=userSta]").attr('type', 'hidden').val(this.checked ? 1 : 2);
+
+        });
+
+        form.on('submit(submit)', function (data) {
+            console.log(355);
+            console.log(data);
+            console.log(data.field.oid);
+            if (data.field.oid === undefined || data.field.oid === null || data.field.oid === "") {
+                CoreUtil.sendAjax("/hotel/order", JSON.stringify(data.field), function (res) {
+                    $(".order_table_div").show();
+                    $(".operation_order").hide();
+                    loadData(1);
+                }, "POST", false, function (res) {
+                    layer.msg("抱歉！您暂无新增订单的权限");
+                });
+            } else {
+                CoreUtil.sendAjax("/hotel/order", JSON.stringify(data.field), function (res) {
+                    $(".order_table_div").show();
+                    $(".operation_order").hide();
+                    loadData(1);
+                }, "PUT", false, function (res) {
+                    layer.msg("抱歉！您暂无编辑订单的权限");
+                });
+            }
+            return false;
+        });
+
+    });
+</script>
+</html>

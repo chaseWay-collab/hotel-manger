@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.RoomTypeMapper">
+    <resultMap id="BaseResultMap" type="com.example.entity.hotel.RoomType">
+        <id column="rt_id" jdbcType="VARCHAR" property="rtId" />
+        <result column="rt_pic" jdbcType="VARCHAR" property="rtPic" />
+        <result column="rt_name" jdbcType="VARCHAR" property="rtName" />
+        <result column="rt_pdbr" jdbcType="INTEGER" property="rtPdbr" />
+        <result column="rt_price" jdbcType="INTEGER" property="rtPrice" />
+        <result column="rt_pdwd" jdbcType="INTEGER" property="rtPdwd" />
+        <result column="rt_sq" jdbcType="VARCHAR" property="rtSq" />
+        <result column="rt_pcou" jdbcType="INTEGER" property="rtPcou" />
+        <result column="rt_btype" jdbcType="VARCHAR" property="rtBtype" />
+        <result column="rt_msg" jdbcType="VARCHAR" property="rtMsg" />
+        <result column="rt_state" jdbcType="INTEGER" property="rtState" />
+        <result column="rt_num" jdbcType="INTEGER" property="rtNum" />
+        <result column="rt_reg" jdbcType="TIMESTAMP" property="rtReg" />
+        <result column="rt_bath" jdbcType="VARCHAR" property="rtBath" />
+        <result column="rt_media" jdbcType="VARCHAR" property="rtMedia" />
+        <result column="u_id" jdbcType="VARCHAR" property="uId" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        `rt_id`, rt_pic, rt_name, rt_pdbr, rt_price, rt_pdwd, rt_sq, rt_pcou, rt_btype,
+        rt_msg, rt_state, rt_num, rt_reg, rt_media, rt_bath, u_id, create_time, update_time
+  </sql>
+
+</mapper>

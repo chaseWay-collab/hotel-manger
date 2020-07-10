@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+
+    <contextName>MANAGE</contextName>
+
+    <!-- 彩色日志 -->
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+    <!-- 彩色日志格式 -->
+    <property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint}%clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint}%clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint}%m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}" />
+    <!-- Console 输出设置 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>log/riskctrl_%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <!--日志文件保留天数-->
+            <MaxHistory>30</MaxHistory>
+            <!-- 除按日志记录之外，还配置了日志文件不能超过2M，若超过2M，日志文件会以索引0开始命名日志文件，例如log-error-2013-12-21.0.log -->
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度, %msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 错误日志 -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>log/error/riskctrl_error_%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>100</MaxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>error</level>
+        </filter>
+    </appender>
+
+    <!-- 2.2 level为 INFO 日志，时间滚动输出  -->
+    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 正在记录的日志文档的路径及文档名 -->
+        <!--<file>${logging.path}/web_info.log</file>-->
+        <!--日志文档输出格式-->
+        <!--<encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>-->
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天日志归档路径以及格式 ${logging.path}/web-info-%d{yyyy-MM-dd}.%i.log -->
+            <fileNamePattern>log/info/riskctrl_info_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <MaxHistory>100</MaxHistory>
+            <!--<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>-->
+            <!--日志文档保留天数-->
+            <!--<maxHistory>15</maxHistory>-->
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+        <!-- 此日志文档只记录info级别的 -->
+        <!--<filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>info</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+    </appender>
+
+
+    <!-- show parameters for hibernate sql 专为 Hibernate 定制
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+    <logger name="org.hibernate.type.descriptor.sql.BasicExtractor" level="DEBUG" />
+    <logger name="org.hibernate.SQL" level="DEBUG" />
+    <logger name="org.hibernate.engine.QueryParameters" level="DEBUG" />
+    <logger name="org.hibernate.engine.query.HQLQueryPlan" level="DEBUG" /> -->
+
+    <!-- 这里面定义了 CONSOLE_LOG_PATTERN, FILE_LOG_PATTERN 等日志格式, 还定义了一些日志级别 -->
+    <!--<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property name="LOG_LEVEL" value="INFO"/>
+    <property name="LOG_PATH" value="log"/>
+    <property name="LOG_FILE" value="project_manager.log"/>
+    <property name="LOG_HISTORY" value="project_manager.%d{yyyy-MM-dd}.log"/>-->
+
+    <!--日志输出到文件-->
+   <!-- <springProfile name="!dev">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_PATH}/${LOG_FILE}</file>  &lt;!&ndash; 可自己定义 &ndash;&gt;
+            <encoder>
+                <pattern>${FILE_LOG_PATTERN}</pattern> &lt;!&ndash; 输出格式也可自己定义 &ndash;&gt;
+            </encoder>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_PATH}/${LOG_HISTORY}</fileNamePattern>
+                <maxHistory>30</maxHistory>
+            </rollingPolicy>
+        </appender>
+    </springProfile>-->
+
+    <!--异步到文件-->
+    <!--<springProfile name="!dev">
+        <appender name="asyncFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+            <discardingThreshold>0</discardingThreshold>
+            <queueSize>500</queueSize>
+            <appender-ref ref="FILE"/>
+        </appender>
+    </springProfile>-->
+
+    <!--开发环境:打印控制台-->
+   <!-- <springProfile name="dev">
+        &lt;!&ndash; 打印sql &ndash;&gt;
+        <logger name="com.company.project" level="DEBUG"/>
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>-->
+
+    <!-- 输出格式 appender -->
+    <!--<springProfile name="!dev">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="asyncFileAppender"/>
+        </root>
+    </springProfile>-->
+
+    <!--- 在spring配置文件中通过spring.profiles.active=dev  -->
+    <!-- 开发环境. 多个使用逗号隔开 -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="STDOUT" />
+        </root>
+    </springProfile>
+
+    <!--<springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="FILE" />
+            <appender-ref ref="FILE_ERROR" />
+            <appender-ref ref="FILE_INFO" />
+        </root>
+    </springProfile>-->
+
+    <!-- 测试环境 -->
+    <springProfile name="test">
+        <root level="INFO">
+            <appender-ref ref="FILE" />
+            <appender-ref ref="FILE_ERROR" />
+        </root>
+    </springProfile>
+
+    <!-- 生产环境 -->
+    <springProfile name="pro">
+        <root level="INFO">
+            <appender-ref ref="FILE" />
+            <appender-ref ref="FILE_ERROR" />
+        </root>
+    </springProfile>
+</configuration>

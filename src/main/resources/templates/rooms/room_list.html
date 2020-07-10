@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+<div class="panel panel-default operation_room" hidden>
+    <div class="panel-heading title"></div>
+    <div class="layui-card-body">
+        <form class="layui-form " action="" lay-filter="deptInfo" style="width: 700px;margin-top: 10px">
+            <input name="rid" hidden/>
+            <input name="rtId" hidden/>
+            <input name="pid" hidden/>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">房间号</label>
+                <div class="layui-input-block">
+                    <input type="rnum" name="rnum" placeholder="请输入房间号" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">房间类型</div>
+                <div class="layui-input-block">
+                    <input type="rtName" name="rtName" placeholder="请选择房间类型" autocomplete="off" class="layui-input"
+                           readonly="readonly" style="background:#eeeeee!important">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">房间状态</div>
+                <div class="layui-input-block">
+                    <select id="rstate" name="rstate">
+                        <option value="0" selected >请选择房间状态</option>
+                        <option value="1">入住中</option>
+                        <option value="2">维修中</option>
+                        <option value="3">空闲</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">是否有窗</div>
+                <div class="layui-input-block">
+                    <input type="rpdwd" name="rpdwd" placeholder="是否有窗(1:有 0:无)" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <!--<div class="layui-form-item">
+                <div class="layui-form-label ">所属楼层</div>
+                <div class="layui-input-block">
+                    <input type="fid" name="fid" placeholder="请选择所属楼层" autocomplete="off" class="layui-input">
+                </div>
+            </div>-->
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="status" lay-skin="switch" lay-filter="switch" lay-text="启用|禁用" checked>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="submit" class="layui-btn" lay-submit="" lay-filter="submit">保存</button>
+                    <button class="layui-btn layui-btn-primary" id="btn_cancel">返回</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="room_table_div">
+    <div id="searchParam" shiro:hasPermission="sys:room:list">
+        <div class="layui-form-item">
+            <div class="layui-input-inline">
+                <input type="text" id="room_num" class="layui-input" autocomplete="off" placeholder="请输入房号">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" id="rtName" class="layui-input" autocomplete="off" placeholder="请输入房间类型名称">
+            </div>
+            <!--<div class="layui-input-inline">
+                <input type="text" readonly class="layui-input" id="createTime" placeholder="创建时间">
+            </div>-->
+            <div class="layui-input-inline layui-form">
+                <select id="status">
+                    <option value="">请选择房间状态</option>
+                    <option value="1">入住中</option>
+                    <option value="2">维修中</option>
+                    <option value="3">空闲中</option>
+                </select>
+            </div>
+            <div class="layui-input-inline ">
+                <button class="layui-btn" id="search">查询</button>
+            </div>
+        </div>
+
+    </div>
+    <table class="layui-hide" id="room_table" lay-filter="room_table"></table>
+    <div id="laypage"></div>
+</div>
+<div id="roomType" style="display: none"></div>
+<!--<div id="roles" class="demo-transfer" style="display: none"></div>-->
+</body>
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addNewRoom" shiro:hasPermission="sys:room:add">添加</button>
+        <button class="layui-btn layui-btn-sm" lay-event="batchDeleted" shiro:hasPermission="sys:room:deleted">删除</button>
+    </div>
+</script>
+<!--<a class="layui-btn  layui-btn-xs" lay-event="operationRoom" shiro:hasPermission="sys:room:detail">查看详情</a>-->
+<script type="text/html" id="tool">
+    <a class="layui-btn layui-btn-xs" lay-event="edit" shiro:hasPermission="sys:room:update">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" shiro:hasPermission="sys:room:deleted">删除</a>
+</script>
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script>
+    var table = layui.table;
+    var laypage = layui.laypage;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = jQuery = layui.jquery;
+    var laydate = layui.laydate;
+    var tree = layui.tree;
+    var transfer = layui.transfer;
+
+    layui.use(['table', 'laypage', 'layer', 'laydate', 'tree', 'transfer'], function () {
+        var searchParam = {
+            rtId: null,
+            rstate: null,
+            rtName: null,
+            startTime: null,
+            endTime: null,
+            rnum: null,
+            page: 1,
+            limit: 10
+        };
+
+        //初始化 获取数据
+        loadData();
+
+        function loadData(page) {
+            //console.log(page);
+            searchParam.page = CoreUtil.isEmpty(page) ? searchParam.page : page;
+            CoreUtil.sendAjax("/sys/rooms", JSON.stringify(searchParam), function (res) {
+                //console.log(res);
+                //初始化渲染数据
+                if (res.data.records != null) {
+                    console.log(res.data.records);
+                    loadTable(res.data.records);
+                }
+                laypageTable(res.data.total);
+            }, "POST", false, function (res) {
+                layer.msg("抱歉！您暂无获取列表的权限");
+                var noAuthorityData = [];
+                loadTable(noAuthorityData);
+            });
+        }
+
+        var laypageTable = function (total) {
+            // console.log(total);  // 2
+            laypage.render({
+                elem: 'laypage'
+                , count: total
+                , limit: searchParam.limit
+                , layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+                , curr: searchParam.page
+                , jump: function (obj, first) {
+                    if (!first) {
+                        searchParam.page = obj.curr;
+                        searchParam.limit = obj.limit;
+                        loadData()
+                    }
+                }
+            });
+        };
+        //渲染table
+        var loadTable = function (data) {
+            table.render({
+                elem: '#room_table'
+                , cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'},
+                        {field: 'rid', title: 'ID', width: 130},
+                        {field: 'rnum', title: '房间号码', width: 130},
+                        {field: 'rtName', title: '房间类型', width: 120},
+                        {
+                            field: 'rstate', title: '房间状态', width: 100, templet: function (item) {
+                                if (item.rstate === 1) {
+                                    return "入住中";
+                                }
+                                if (item.rstate === 2) {
+                                    return "维修中";
+                                }
+                                if (item.rstate === 3) {
+                                    return "空闲中";
+                                }
+                            }
+                        },
+                        {
+                            field: 'rpdwd', title: '是否有窗', width: 100, templet: function (item) {
+                                if (item.rpdwd === 0) {
+                                    return "无";
+                                }
+                                if (item.rpdwd === 1) {
+                                    return "有";
+                                }
+                            }
+                        },
+                        {field: 'rreg', title: '创建时间', minWidth: 120},
+                        {field: 'updateTime', title: '更新时间', minWidth: 120},
+                        {width: 300, toolbar: "#tool", title: '操作'}
+                    ]
+                ]
+                , data: data
+                , even: true
+                , limit: data.length
+                , limits: [10, 20, 30, 40, 50]
+                , toolbar: '#toolbar'
+            });
+        };
+        laydate.render({
+            elem: '#createTime'
+            , type: 'datetime'
+            , range: '~'
+            , done: function (value, date, endDate) {
+                if (value != null && value !== "") {
+                    searchParam.startTime = value.split("~")[0];
+                    searchParam.endTime = value.split("~")[1];
+                } else {
+                    searchParam.startTime = null;
+                    searchParam.endTime = null;
+                }
+            }
+        });
+        $("#search").click(function () {
+            searchParam.rstate = $("#rstate").val();
+            searchParam.rnum = $("#room_num").val();
+            searchParam.rtName = $("#rtName").val();
+            loadData(1)
+        });
+
+        table.on('toolbar(room_table)', function (obj) {
+
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'batchDeleted':
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        layer.msg("请选择要批量删除的房间");
+                    } else {
+                        var roomIds = [];
+                        $(data).each(function (index, item) {
+                            roomIds.push(item.id);
+                        });
+                        tipDialog(userIds, "选中的");
+                    }
+                    break;
+                case 'addNewRoom':
+                    $(".title").html("新增房间");
+                    $(".room_table_div").hide();
+                    $(".operation_room").show();
+                    $(".operation_room input[name=rid]").val("");
+                    $(".operation_room input[name=rnum]").val("");
+                    $(".operation_room input[name=rtName]").val("");
+                    $(".operation_room select[name=rstate]").val("");  // select
+                    $(".operation_room input[name=rpdwd]").val("");
+                    $(".operation_room input[name=status]").attr('checked', 'checked');
+                    $(".operation_room input[name=status]").attr('type', 'hidden').val(1);
+                    var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                    x[0].setAttribute("class", "layui-unselect layui-form-switch layui-form-onswitch");
+                    var d = document.getElementsByTagName('em')[0];
+                    d.firstChild.nodeValue = '启用';
+                    form.render(); //更新全部
+                    initTree("");
+                    break;
+            }
+        });
+
+        table.on('tool(room_table)', function (obj) {
+            var data = obj.data;
+            console.log(286);
+            console.log(data);
+            switch (obj.event) {
+                case 'del':
+                    tipDialog(data.rid);
+                    break;
+                case 'edit':
+                    $(".room_table_div").hide();
+                    $(".operation_room").show();
+                    $(".title").html("编辑房间");
+                    $(".operation_room input[name=rid]").val(data.rid);
+                    $(".operation_room input[name=rtId]").val(data.rtid);
+                    $(".operation_room input[name=rnum]").val(data.rnum);
+                    $(".operation_room input[name=rtName]").val(data.rtName);
+                    $(".operation_room select[name=rstate]").val(data.rstate);
+                    $(".operation_room input[name=rpdwd]").val(data.rpdwd);
+                    if (data.status === 1) {
+                        $(".operation_role input[name=status]").attr('checked', 'checked');
+                        $(".operation_role input[name=status]").attr('type', 'hidden').val(1);
+                        var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                        x[0].setAttribute("class", "layui-unselect layui-form-switch layui-form-onswitch");
+                        var d = document.getElementsByTagName('em')[0];
+                        d.firstChild.nodeValue = '启用';
+                    } else {
+                        $(".operation_role input[name=status]").attr('type', 'hidden').removeAttr("checked").val(0);
+                        var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                        x[0].setAttribute("class", "layui-unselect layui-form-switch");
+                        var d = document.getElementsByTagName('em')[0];
+                        d.firstChild.nodeValue = '禁用';
+                    }
+                    form.render(); //更新全部
+                    initTree(data.rid);
+                    break;
+            }
+        });
+
+        $("#btn_cancel").click(function () {
+            $(".room_table_div").show();
+            $(".operation_room").hide();
+            return false;
+        });
+        var tipDialog = function ( id ) {
+            layer.open({
+                content: '确定要删除么',
+                yes: function (index, layero) {
+                    layer.close(index); //如果设定了yes回调，需进行手工关闭
+                    CoreUtil.sendAjax("/sys/room/" + id, null, function (res) {
+                        layer.msg(res.msg);
+                        loadData(1);
+                    }, "DELETE", false);
+                }
+            });
+        };
+
+        form.on('switch(switch)', function () {
+            $(".operation_room input[name=status]").attr('type', 'hidden').val(this.checked ? 1 : 2);
+        });
+
+        form.on('submit(submit)', function (data) {
+            console.log(355);
+            console.log(data);
+            console.log(data.field.rid);
+            if (data.field.rid === undefined || data.field.rid === null || data.field.rid === "") {
+                CoreUtil.sendAjax("/sys/room", JSON.stringify(data.field), function (res) {
+                    $(".room_table_div").show();
+                    $(".operation_room").hide();
+                    loadData(1);
+                }, "POST", false, function (res) {
+                    layer.msg("抱歉！您暂无新增房间的权限");
+                });
+            } else {
+                CoreUtil.sendAjax("/sys/room", JSON.stringify(data.field), function (res) {
+                    $(".room_table_div").show();
+                    $(".operation_room").hide();
+                    loadData(1);
+                }, "PUT", false, function (res) {
+                    layer.msg("抱歉！您暂无编辑房间的权限");
+                });
+            }
+            return false;
+        });
+        // deptTree
+        var loadRoom = function (data) {
+            console.log("367");
+            console.log(data);
+            tree.render({
+                elem: '#roomType'
+                , data: data
+                , onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+                , click: function (obj) {
+                    selectNode = obj;
+                    console.log(JSON.stringify(selectNode.data.title));
+                    layer.msg(JSON.stringify(selectNode.data.title));
+                }
+            });
+        };
+
+        var loadPermissionTree = function (data) {
+            tree.render({
+                elem: '#permissionTree'
+                , data: data
+                , onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+                , showCheckbox: true  //是否显示复选框
+                , id: 'permissionIds'
+                , accordion: false
+                , click: function (obj) {
+                    selectNode = obj;
+                    layer.msg(JSON.stringify(selectNode.data.title));
+                }
+            });
+        };
+
+        $(".operation_room input[name=rtName]").click(function () {
+            console.log("name=rtName");
+            layer.open({
+                type: 1,
+                skin: 'layui-layer-molv',
+                title: "选择类型",
+                area: ['400px', '450px'],
+                shade: 0,
+                shadeClose: false,
+                content: jQuery("#roomType"),
+                btn: ['确定', '取消'],
+                yes: function (index) {
+                    console.log(417);
+                    if (selectNode.data != null) {
+                        //console.log(418);
+                        //console.log(selectNode.data);
+                        //选中回显
+                        //console.log("418");
+                        //console.log(selectNode.data.id);
+                        $(".operation_room input[name=pid]").val("0");
+                        $(".operation_room input[name=rtName]").val(selectNode.data.title);
+                    }
+                    // roomType
+                    layer.close(index);
+                }
+            });
+        });
+        var initTree = function (id) {
+            console.log(423);
+            console.log(id);
+            var param = {rtId: id};
+            CoreUtil.sendAjax("/sys/roomType/tree", param, function (res) {
+                console.log(431);
+                console.log(res);
+                loadRoom(res.data);
+            }, "GET", false, function (res) {
+                layer.msg("抱歉！您暂无获取房间类型的权限");
+                var noAuthorityData = [];
+                loadRoom(noAuthorityData);
+            });
+        };
+    });
+</script>
+</html>

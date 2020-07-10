@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+<div class="panel panel-default operation_floor" hidden>
+    <div class="panel-heading title"></div>
+    <div class="layui-card-body">
+        <form class="layui-form " action="" lay-filter="deptInfo" style="width: 700px;margin-top: 10px">
+            <input name="fid" hidden/>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">楼层</label>
+                <div class="layui-input-block">
+                    <input type="fno" name="fno" placeholder="请输入楼层" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">楼层名称</div>
+                <div class="layui-input-block">
+                    <input type="fname" name="fname" placeholder="请输入楼层名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-form-label ">楼层描述</div>
+                <div class="layui-input-block">
+                    <input type="fmsg" name="fmsg" placeholder="请输入楼层描述" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="status" lay-skin="switch" lay-filter="switch" lay-text="启用|禁用" checked>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="submit" class="layui-btn" lay-submit="" lay-filter="submit">保存</button>
+                    <button class="layui-btn layui-btn-primary" id="btn_cancel">返回</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="floor_table_div">
+    <div id="searchParam" shiro:hasPermission="hotel:floor:list">
+        <div class="layui-form-item">
+            <div class="layui-input-inline">
+                <input type="text" id="f_no" class="layui-input" autocomplete="off" placeholder="请输入楼层">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" id="f_name" class="layui-input" autocomplete="off" placeholder="请输入楼层名称">
+            </div>
+            <div class="layui-input-inline ">
+                <button class="layui-btn" id="search">查询</button>
+            </div>
+        </div>
+
+    </div>
+    <table class="layui-hide" id="floor_table" lay-filter="floor_table"></table>
+    <div id="laypage"></div>
+</div>
+</body>
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addNewFloor" shiro:hasPermission="hotel:floor:add">添加</button>
+        <button class="layui-btn layui-btn-sm" lay-event="batchDeleted" shiro:hasPermission="hotel:floor:deleted">删除</button>
+    </div>
+</script>
+<!--<a class="layui-btn  layui-btn-xs" lay-event="operationRoom" shiro:hasPermission="sys:room:detail">查看详情</a>-->
+<script type="text/html" id="tool">
+    <a class="layui-btn layui-btn-xs" lay-event="edit" shiro:hasPermission="hotel:floor:update">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" shiro:hasPermission="hotel:floor:deleted">删除</a>
+</script>
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script>
+    var table = layui.table;
+    var laypage = layui.laypage;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = jQuery = layui.jquery;
+    var laydate = layui.laydate;
+    var tree = layui.tree;
+    var transfer = layui.transfer;
+
+    layui.use(['table', 'laypage', 'layer', 'laydate', 'tree', 'transfer'], function () {
+        var searchParam = {
+            fid: null,
+            fname: null,
+            fno: null,
+            fmsg: null,
+            status: null,
+            startTime: null,
+            endTime: null,
+            page: 1,
+            limit: 10
+        };
+
+        //初始化 获取数据
+        loadData();
+
+        function loadData(page) {
+            console.log(page);
+            searchParam.page = CoreUtil.isEmpty(page) ? searchParam.page : page;
+            CoreUtil.sendAjax("/hotel/floors", JSON.stringify(searchParam), function (res) {
+                console.log(res);
+                //初始化渲染数据
+                if (res.data.records != null) {
+                    console.log(res.data.records);
+                    loadTable(res.data.records);
+                }
+                laypageTable(res.data.total);
+            }, "POST", false, function (res) {
+                layer.msg("抱歉！您暂无获取列表的权限");
+                var noAuthorityData = [];
+                loadTable(noAuthorityData);
+            });
+        }
+
+        var laypageTable = function (total) {
+            // console.log(total);  // 2
+            laypage.render({
+                elem: 'laypage'
+                , count: total
+                , limit: searchParam.limit
+                , layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+                , curr: searchParam.page
+                , jump: function (obj, first) {
+                    if (!first) {
+                        searchParam.page = obj.curr;
+                        searchParam.limit = obj.limit;
+                        loadData()
+                    }
+                }
+            });
+        };
+        //渲染table
+        var loadTable = function (data) {
+            table.render({
+                elem: '#floor_table'
+                , cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'},
+                        {field: 'fid', title: 'ID', width: 130},
+                        {field: 'fno', title: '楼层', width: 130},
+                        {field: 'fname', title: '楼层名称', width: 120},
+                        {field: 'fmsg', title: '楼层说明', width: 130},
+                        {field: 'createTime', title: '创建时间', minWidth: 120},
+                        {field: 'updateTime', title: '更新时间', minWidth: 120},
+                        {width: 300, toolbar: "#tool", title: '操作'}
+                    ]
+                ]
+                , data: data
+                , even: true
+                , limit: data.length
+                , limits: [10, 20, 30, 40, 50]
+                , toolbar: '#toolbar'
+
+            });
+        };
+        laydate.render({
+            elem: '#createTime'
+            , type: 'datetime'
+            , range: '~'
+            , done: function (value, date, endDate) {
+                if (value != null && value !== "") {
+                    searchParam.startTime = value.split("~")[0];
+                    searchParam.endTime = value.split("~")[1];
+                } else {
+                    searchParam.startTime = null;
+                    searchParam.endTime = null;
+                }
+
+            }
+        });
+        $("#search").click(function () {
+            searchParam.fno = $("#fno").val();
+            searchParam.fname = $("#fname").val();
+            loadData(1)
+        });
+
+        table.on('toolbar(floor_table)', function (obj) {
+
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'batchDeleted':
+                    var checkStatus = table.checkStatus(obj.config.id);
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        layer.msg("请选择要批量删除的楼层");
+                    } else {
+                        var roomIds = [];
+                        $(data).each(function (index, item) {
+                            roomIds.push(item.id);
+                        });
+                        tipDialog(userIds, "选中的");
+                    }
+                    break;
+                case 'addNewFloor':
+                    $(".title").html("新增楼层");
+                    $(".floor_table_div").hide();
+                    $(".operation_floor").show();
+                    $(".operation_floor input[name=fid]").val("");
+                    $(".operation_floor input[name=fno]").val("");
+                    $(".operation_floor input[name=fname]").val("");
+                    $(".operation_floor input[name=fmsg]").val("");
+                    $(".operation_floor input[name=status]").attr('checked', 'checked');
+                    $(".operation_floor input[name=status]").attr('type', 'hidden').val(1);
+                    var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                    x[0].setAttribute("class", "layui-unselect layui-form-switch layui-form-onswitch");
+                    var d = document.getElementsByTagName('em')[0];
+                    d.firstChild.nodeValue = '启用';
+                    form.render(); //更新全部
+                    break;
+            }
+        });
+
+        table.on('tool(floor_table)', function (obj) {
+            var data = obj.data;
+            console.log(286);
+            console.log(data);
+            switch (obj.event) {
+                case 'del':
+                    tipDialog(data.fid);
+                    break;
+                case 'edit':
+                    $(".floor_table_div").hide();
+                    $(".operation_floor").show();
+                    $(".title").html("编辑楼层");
+                    $(".operation_floor input[name=fid]").val(data.fid);
+                    $(".operation_floor input[name=fno]").val(data.fno);
+                    $(".operation_floor input[name=fname]").val(data.fname);
+                    $(".operation_floor input[name=fmsg]").val(data.fmsg    );
+                    if (data.status === 1) {
+                        $(".operation_floor input[name=status]").attr('checked', 'checked');
+                        $(".operation_floor input[name=status]").attr('type', 'hidden').val(1);
+                        var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                        x[0].setAttribute("class", "layui-unselect layui-form-switch layui-form-onswitch");
+                        var d = document.getElementsByTagName('em')[0];
+                        d.firstChild.nodeValue = '启用';
+                    } else {
+                        $(".operation_role input[name=status]").attr('type', 'hidden').removeAttr("checked").val(0);
+                        var x = document.getElementsByClassName("layui-unselect layui-form-switch");
+                        x[0].setAttribute("class", "layui-unselect layui-form-switch");
+                        var d = document.getElementsByTagName('em')[0];
+                        d.firstChild.nodeValue = '禁用';
+                    }
+                    form.render(); //更新全部
+                    break;
+            }
+        });
+
+        var getFloorDetail = function (id) {
+            CoreUtil.sendAjax("/hotel/floor/" + id, null, function (res) {
+                form.render(); //更新全部
+            }, "GET", false);
+        };
+
+        $("#btn_cancel").click(function () {
+            $(".floor_table_div").show();
+            $(".operation_floor").hide();
+            return false;
+        });
+
+        var tipDialog = function ( id ) {
+            layer.open({
+                content: '确定要删除么',
+                yes: function (index, layero) {
+                    layer.close(index); //如果设定了yes回调，需进行手工关闭
+                    CoreUtil.sendAjax("/hotel/floor/" + id, null, function (res) {
+                        layer.msg(res.msg);
+                        loadData(1);
+                    }, "DELETE", false);
+                }
+            });
+        };
+
+        form.on('switch(switch)', function () {
+            $(".operation_floor input[name=status]").attr('type', 'hidden').val(this.checked ? 1 : 2);
+        });
+
+        form.on('submit(submit)', function (data) {
+            console.log(355);
+            console.log(data);
+            console.log(data.field.fid);
+            if (data.field.fid === undefined || data.field.fid === null || data.field.fid === "") {
+                CoreUtil.sendAjax("/hotel/floor", JSON.stringify(data.field), function (res) {
+                    $(".floor_table_div").show();
+                    $(".operation_floor").hide();
+                    loadData(1);
+                }, "POST", false, function (res) {
+                    layer.msg("抱歉！您暂无新增楼层的权限");
+                });
+            } else {
+                CoreUtil.sendAjax("/hotel/floor", JSON.stringify(data.field), function (res) {
+                    $(".floor_table_div").show();
+                    $(".operation_floor").hide();
+                    loadData(1);
+                }, "PUT", false, function (res) {
+                    layer.msg("抱歉！您暂无编辑楼层的权限");
+                });
+            }
+            return false;
+        });
+
+
+        var loadPermissionTree = function (data) {
+            tree.render({
+                elem: '#permissionTree'
+                , data: data
+                , onlyIconControl: true  //是否仅允许节点左侧图标控制展开收缩
+                , showCheckbox: true  //是否显示复选框
+                , id: 'permissionIds'
+                , accordion: false
+                , click: function (obj) {
+                    selectNode = obj;
+                    layer.msg(JSON.stringify(selectNode.data.title));
+                }
+            });
+        };
+
+    });
+</script>
+</html>

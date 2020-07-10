@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.OrderInfoMapper">
+    <resultMap id="BaseResultMap" type="com.example.entity.hotel.OrderInfo">
+        <id column="o_id" jdbcType="VARCHAR" property="oId" />
+        <result column="o_p" jdbcType="VARCHAR" property="oP" />
+        <result column="u_id" jdbcType="VARCHAR" property="uId" />
+        <result column="status" jdbcType="INTEGER" property="status" />
+        <result column="user_sta" jdbcType="INTEGER" property="userSta" />
+        <result column="o_rnum" jdbcType="INTEGER" property="oRnum" />
+        <result column="o_pl" jdbcType="INTEGER" property="oPl" />
+        <result column="o_tel" jdbcType="VARCHAR" property="oTel" />
+        <result column="o_price" jdbcType="INTEGER" property="oPrice" />
+        <result column="o_pw" jdbcType="INTEGER" property="oPw" />
+        <result column="o_pf" jdbcType="INTEGER" property="oPf" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+        <result column="o_uin" jdbcType="TIMESTAMP" property="oUin" />
+        <result column="o_uout" jdbcType="TIMESTAMP" property="oUout" />
+        <result column="o_no" jdbcType="VARCHAR" property="oNo" />
+        <result column="o_hp" jdbcType="VARCHAR" property="oHp" />
+        <result column="name" jdbcType="VARCHAR" property="name" />
+        <result column="email" jdbcType="VARCHAR" property="email" />
+
+    </resultMap>
+    <sql id="Base_Column_List">
+        `o_id`, o_p, u_id, status, o_rnum, o_pl, o_tel, o_price, o_pw, o_pf,
+        create_time, end_time, `o_uin`, `o_uout`, o_no, o_hp, `name`, `email`, user_sta
+  </sql>
+
+</mapper>
